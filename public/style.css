@@ -1,0 +1,55 @@
+/* Let's just center everything, it's a simple application */
+body {
+	position: absolute;
+	height:	100%;
+	width: 100%;
+	margin: 0;
+	display: grid;
+	justify-content: center;
+	align-content: center;
+}
+/* Some general style */
+main {
+	display: grid;
+	color:black;
+	font-family: monospace;
+}
+main > h1 {
+	margin:0;
+}
+main > ul {
+	padding-left: 0; list-style-type: none
+}
+svg .tick line {
+	stroke:black;
+}
+
+/*SVG*/
+svg > .ships > .ship.invisible { fill:none; }
+svg > .ships > .ship.placing-active { 
+	fill:#00FF00;
+	animation: Pulsating 0.8s ease-in-out infinite;
+}
+svg > .ships > .ship.placing-overlapping { fill:#FF0000;}
+svg > .ships > .ship.unharmed { fill:#000000AA; }
+svg > .ships > .ship.damaged { fill:#FFBBBB; }
+svg > .ships > .ship.sunken { fill:#000000A0; }
+svg > .ships > .ship.hidden { display:none !important; } /* DEBUG */
+svg > .bombs > .bomb {
+	stroke:black;
+	stroke-width: 3;
+	fill:#FFFFFF;
+}
+svg > .bombs > .bomb.hit { fill:orange; stroke: red; }
+svg > .bombs > .bomb.placing-active { animation: Pulsating 0.8s ease-in-out infinite; }
+svg > .bombs > .bomb.placing-overlapping { stroke:yellow; fill:yellow !important; }
+
+#boards {
+	display:flex;
+	flex-direction:column;
+}
+@keyframes Pulsating {
+  from { opacity: 0.90; }
+  50% { opacity: 0.0; }
+  to { opacity: 0.90; }
+}
