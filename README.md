@@ -8,3 +8,8 @@ Battleship game with a (bad) AI opponent
 npm install
 npm start
 ```
+# Tests
+The project uses jest.
+```
+npm test
+```
