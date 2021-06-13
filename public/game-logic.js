@@ -4,13 +4,13 @@ import _ from './underscore.js'
 
 export default {}
 let logger = () => {}
-export function setLogListener(logger){
-
+export function setLogListener(l){
+	logger = l
 }
 
 //do the initial hot item accounting
 export function newGame(){ 
-	logger('New game')
+	logger('New game was started')
 	return stateClone(INITIAL_STATE) 
 }
 export function opponentOf(player) { return player === PLAYER.HUMAN ? PLAYER.AI : PLAYER.HUMAN }
@@ -28,9 +28,7 @@ export function gameStep(_state, player, action) {
 			state = handleInputBombing(state, player, action)
 		break;
 		case GAMESTATE.IDLE:
-			throw new Error('Game is not active')
-		default:
-			throw new Error('Unknown gamestate')
+			return state
 	}
 	
 	//Done placing ships, update the state to indicate we are now in the bombing phase
@@ -38,13 +36,17 @@ export function gameStep(_state, player, action) {
 		state.gameState = GAMESTATE.PLACING_BOMBS
 	}
 
-	console.log('all sunk?', state.boards[PLAYER.HUMAN].ships.every((ship) => ship.sunken))
-
-	if(state.boards[PLAYER.HUMAN].ships.every((ship) => ship.sunken) && state.boards[PLAYER.HUMAN].ships.length === 4)
+	if(state.boards[PLAYER.HUMAN].ships.every((ship) => ship.sunken) && state.boards[PLAYER.HUMAN].ships.length === 4){
 		state.winner = PLAYER.AI
+		state.gameState = GAMESTATE.IDLE
+		logger(`Player ${player} wins`)
+	}
 
-	if(state.boards[PLAYER.AI].ships.every((ship) => ship.sunken) && state.boards[PLAYER.AI].ships.length === 4)
+	if(state.boards[PLAYER.AI].ships.every((ship) => ship.sunken) && state.boards[PLAYER.AI].ships.length === 4){
 		state.winner = PLAYER.HUMAN
+		state.gameState = GAMESTATE.IDLE
+		logger(`Player ${player} wins`)
+	}
 	return state
 }
 function handleInputPlacing(_state, player, action) {
@@ -54,8 +56,9 @@ function handleInputPlacing(_state, player, action) {
 	if(action === INPUT.CONFIRM) {
 		//confirm placement of the hot ship (first in unplaced array)
 		const shipToConfirm = _.first(playerState.unplacedShips)
-		if(shipToConfirm.overlapping === true)
+		if(shipToConfirm.overlapping === true){
 			return state
+		}
 
 		playerState.ships = [...playerState.ships, shipToConfirm]
 		playerState.unplacedShips = [..._.rest(playerState.unplacedShips)]
@@ -80,10 +83,7 @@ function handleInputPlacing(_state, player, action) {
 			case INPUT.ROTATE:
 				ship.horizontal = !ship.horizontal
 			break;
-			default:
-				throw new Error('Unknown action')
 		}
-		//state = hotItemAccounting(state, player)
 	}
 	state = hotItemAccounting(state, player)
 	return state
@@ -168,8 +168,9 @@ function placeBomb(_state, player, _bomb) {
 	state.boards[opponentOf(player)].ships = ships.map(ship => {
 		let prevHits = ship.hits
 		ship = hitAccounting(bomb, ship)
-		if(ship.hits > prevHits)
+		if(ship.hits > prevHits){
 			bomb.hit = true
+		}
 		return ship
 	})
 
@@ -178,6 +179,9 @@ function placeBomb(_state, player, _bomb) {
 
 	//reset the unplaced bomb
 	state.boards[player].unplacedBomb = INITIAL_STATE.boards[PLAYER.HUMAN].unplacedBomb
+
+	//do another hot item accounting, new bomb may overlap
+	state = hotItemAccounting(state, player)
 	return state
 }
 
@@ -186,11 +190,11 @@ function hitAccounting(bomb, _ship){
 	const bbox = getShipBoundingBox(ship)
 	if(bomb.x <= bbox.x2 && bbox.x1 <= bomb.x && bomb.y <= bbox.y2 && bbox.y1 <= bomb.y){
 		ship.hits++
-		console.log(`Ship "${ship.id}" was hit. It has been hit ${ship.hits} times`)
+		logger(`A ship was hit`)
 	}
 	if(ship.hits === ship.size){
 		ship.sunken = true
-		console.log(`Ship "${ship.id}" was sunk.`)
+		logger(`A ship was sunk`)
 	}
 
 	return ship

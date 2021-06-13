@@ -1,14 +1,8 @@
-
 //TODO linting
-//TODO debug logs
-//TODO bug with unknown
-//TODO fix unknown action and ai
-//TODO BUG: initial check on bomb overlap not working
 import {setLogListener, newGame, gameStep, opponentOf} from './game-logic.js'
 import {GAMESTATE, INPUT, PLAYER, INITIAL_STATE} from './game-constants.js'
 import {stateClone} from './util.js'
  
-setLogListener((log) => console.log(log))
 
 /*
 	Drawing constants
@@ -119,15 +113,22 @@ function drawBoard(svg, player, _state, debug) {
 		
 }
 
-const DEBUG = false
+const DEBUG = true
 let stateInstance = newGame()
 let onInput = restart
+let gameScore = {
+	[PLAYER.HUMAN]: 0,
+	[PLAYER.AI]: 0
+}
+function log(msg) {
+	d3.select('#game-log').text(msg)
+}
+setLogListener(log)
 
 function restart() {
 	stateInstance = newGame()
 	onInput = (action) => advanceGame(action)
 	draw(stateInstance)
-
 }
 function draw(state){
 	drawBoard(boardPlayer, PLAYER.HUMAN, stateInstance, DEBUG)
@@ -137,7 +138,8 @@ function advanceGame(action){
 	stateInstance = gameStep(stateInstance, stateInstance.turn, action)
 	draw(stateInstance)
 	if(stateInstance.winner){
-		console.log("Winner", stateInstance.winner)
+		gameScore[stateInstance.winner]++
+		log(`Game ended. Score is ${gameScore[PLAYER.HUMAN]}-${gameScore[PLAYER.AI]}`)
 		wipeBoard(boardPlayer)
 		wipeBoard(boardAI)
 		onInput = restart
@@ -149,9 +151,7 @@ function advanceGame(action){
 const aiRandomActions = [INPUT.LEFT, INPUT.RIGHT, INPUT.DOWN, INPUT.UP, INPUT.ROTATE, INPUT.CONFIRM]
 let aiInterval
 function doAIrandomAction(){
-
 	const randAction = aiRandomActions[Math.floor(Math.random()*6)]
-	console.log("AI RANDOM ACTION", randAction)
 	advanceGame(randAction)
 	if(stateInstance.turn === PLAYER.HUMAN)
 		clearInterval(aiInterval)

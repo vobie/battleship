@@ -23,6 +23,9 @@ main > ul {
 svg .tick line {
 	stroke:black;
 }
+main #head-info {grid-area: 1 / 1 / span 1 / span 1;}
+main #game-log {grid-area: 2 / 2 / span 1 / span 1;}
+main #boards {grid-area: 2 / 1 / span 1 / span 1;}
 
 /*SVG*/
 svg > .ships > .ship.invisible { fill:none; }
