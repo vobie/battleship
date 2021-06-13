@@ -10,8 +10,8 @@ export function opponentOf(player) { return player === PLAYER.HUMAN ? PLAYER.AI 
 export function gameStep(_state, player, action) {
 	let state = stateClone(_state)
 
-	if(state.turn !== player)
-		throw new Error('Called step function with the wrong player')
+	//if(state.turn !== player)
+	//	throw new Error('Called step function with the wrong player')
 
 	switch(state.gameState) {
 		case GAMESTATE.PLACING_SHIPS:

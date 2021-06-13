@@ -4,28 +4,28 @@ import {GAMESTATE, INPUT, PLAYER, INITIAL_STATE} from '../public/game-constants.
 //This is a lil wonky, new with jest and not sure how to test unexported functions
 const {
 	//Const
-	newGame,
+	newGame,//
 
 	//(sometimes partial) State->State functions
-	hotItemAccounting,
-	placeBomb,
-	hitAccounting,
-	passTurn,
-	markOverlappingShip,
+	hotItemAccounting,//
+	placeBomb,//
+	hitAccounting,//
+	passTurn,//
+	markOverlappingShip,//
 	gameStep,
 
 	//Board range enforcement
-	clampShipPosition,
-	clampBombPosition,
+	clampShipPosition,//
+	clampBombPosition,//
 
 	//Input handling
 	handleInputPlacing,
 	handleInputBombing,
 
 	//calc
-	opponentOf,
+	opponentOf,//
 	isOverlapping,
-	getShipBoundingBox
+	getShipBoundingBox//
 } = testables
 
 
@@ -137,7 +137,6 @@ describe('Hot item (ship or bomb to be placed) state updates - overlaps', ()=> {
 		const state = {
 			gameState : GAMESTATE.PLACING_SHIPS,
 			turn : PLAYER.HUMAN,
-			winner : null,
 			boards : {
 				[PLAYER.HUMAN] : {
 					ships: [{x: 3, y: 3, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"}],
@@ -147,6 +146,309 @@ describe('Hot item (ship or bomb to be placed) state updates - overlaps', ()=> {
 				},
 			}
 		}
-		expect(hotItemAccounting(state)).toMatchObject({ boards: { unplacedShips: [{ overlapping: true }] } })
+		expect(hotItemAccounting(state, PLAYER.HUMAN)).toMatchObject({ boards: { [PLAYER.HUMAN] : { unplacedShips: [{ overlapping: true }] } } })
+	})
+	it('Marks overlap when two ships cross each other in the middle', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_SHIPS,
+			turn : PLAYER.AI,
+			boards : {
+				[PLAYER.AI] : {
+					ships: [{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, id: "Ship2"}, {x: 3, y: 3, size: 3, horizontal: true, overlapping:false, id: "Ship3"}],
+					unplacedShips: [
+						{x: 4, y: 2, size: 4, horizontal: false, overlapping:false, id: "Ship4"},
+						{x: 1, y: 1, size: 5, horizontal: true, overlapping:false, id: "Ship5"}
+					]
+				},
+			}
+		}
+		expect(hotItemAccounting(state, PLAYER.AI)).toMatchObject({ boards: { [PLAYER.AI] : { unplacedShips: [{ overlapping: true }, { overlapping: false }] } } })
+	})
+	it('Marks overlap when two bombs are on top of eachother', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [{x:4, y:4, hit: false, overlapping: false}],
+					unplacedBomb: {x:4, y:4, hit: false, overlapping: false}
+				},
+			}
+		}
+		expect(hotItemAccounting(state, PLAYER.HUMAN)).toMatchObject({ boards: { [PLAYER.HUMAN] : { unplacedBomb: { overlapping: true } } } })
+	})
+})
+
+describe('Bomb placing', () => {
+	it('Places the hot bomb in the placed bombs array', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [],
+					unplacedBomb: {x:5, y:5, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: []
+				}
+			}
+		}
+		expect(placeBomb(state, PLAYER.HUMAN, {x:5, y:5, hit: false, overlapping: false})).toMatchObject({ boards : {[PLAYER.HUMAN] : { bombs : [{x:5, y:5, hit: false, overlapping: false}] } } })
+	})
+	it('Marks a hit on the bomb if it should', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: [{x: 1, y: 1, size: 2, hits: 0, horizontal: false, id: "Ship2"}]
+				}
+			}
+		}
+
+		expect(placeBomb(state, PLAYER.HUMAN, {x:1, y:1, hit: false, overlapping: false})).toMatchObject({ boards : {[PLAYER.HUMAN] : { bombs : [{ hit: true }] } } })
+	})
+	it('Does not mark a hit on the bomb if it shouldn\'t', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [],
+					unplacedBomb: {x:5, y:5, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: [{x: 1, y: 1, size: 2, hits: 0, horizontal: false, id: "Ship2"}]
+				}
+			}
+		}
+
+		expect(placeBomb(state, PLAYER.HUMAN, {x:5, y:5, hit: false, overlapping: false})).toMatchObject({ boards : {[PLAYER.HUMAN] : { bombs : [{ hit: false }] } } })
+	})
+	it('Marks a hit on the ship if it should', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: [{x: 1, y: 1, size: 2, hits: 0, horizontal: false, id: "Ship2"}]
+				}
+			}
+		}
+
+		expect(placeBomb(state, PLAYER.HUMAN, {x:1, y:1, hit: false, overlapping: false})).toMatchObject({ boards : {[PLAYER.AI] : { ships : [{ hits: 1 }] } } })
+	})
+	it('Does not mark a hit on the ship if it shouldn\'t', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [],
+					unplacedBomb: {x:2, y:2, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: [{x: 1, y: 1, size: 2, hits: 0, horizontal: false, id: "Ship2"}]
+				}
+			}
+		}
+
+		expect(placeBomb(state, PLAYER.HUMAN, {x:2, y:2, hit: false, overlapping: false})).toMatchObject({ boards : {[PLAYER.AI] : { ships : [{ hits: 0 }] } } })
+	})
+	it('Sinks a ship correctly', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			boards : {
+				[PLAYER.HUMAN] : {	
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: [{x: 1, y: 1, size: 2, hits: 0, horizontal: true, id: "Ship2"}]
+				}
+			}
+		}
+		const state1 = placeBomb(state, PLAYER.HUMAN, {x:1, y:1, hit: false, overlapping: false})
+		expect(state1).toMatchObject({ boards : {[PLAYER.AI] : { ships : [{ hits: 1 }] } } })
+		const state2 = placeBomb(state1, PLAYER.HUMAN, {x:2, y:1, hit: false, overlapping: false})
+		expect(state2).toMatchObject({ boards : {[PLAYER.AI] : { ships : [{ hits: 2, sunken: true }] } } })
+	})
+})
+
+describe('Hit accounting', () => {
+	it('Will count a ship hit', () => {
+		expect(hitAccounting({x:1, y:1}, {x: 1, y: 1, hits: 0, sunken: false, horizontal: true, size: 2, id: "Ship2"})).toMatchObject({hits: 1, sunken: false})
+	})
+	it('Will not count a miss', () => {
+		expect(hitAccounting({x:1, y:1}, {x: 1, y: 5, hits: 0, sunken: false, horizontal: true, size: 2, id: "Ship2"})).toMatchObject({hits: 0, sunken: false})
+	})
+	it('Will sink a ship when hits = size', () => {
+		expect(hitAccounting({x:1, y:2}, {x: 1, y: 1, hits: 1, sunken: false, horizontal: false, size: 2, id: "Ship2"})).toMatchObject({hits: 2, sunken: true})
+	})
+})
+
+describe('Ship overlap function', () => {
+	it('Will count a simple overlap', () => {
+		expect(isOverlapping({x:1, y:1, size: 3, horizontal: true}, {x:1, y:1, size: 2, horizontal: true})).toEqual(true)
+	})
+	it('Will count a horzontal/vertial middle overlap', () => {
+		expect(isOverlapping({x:1, y:3, size: 4, horizontal: true}, {x:3, y:1, size: 5, horizontal: false})).toEqual(true)
+	})
+	it('Will not count a horzontal/vertial non-overlap', () => {
+		expect(isOverlapping({x:3, y:1, size: 4, horizontal: true}, {x:1, y:3, size: 5, horizontal: false})).toEqual(false)
+	})
+})
+
+describe('Input testing. Bombing and placing phases tested through gameStep', () => {
+	it('Moves the ship right from initial position', () => {
+		const state = newGame()
+		expect(gameStep(state, PLAYER.HUMAN, INPUT.RIGHT)).toMatchObject({boards: {[PLAYER.HUMAN]: {unplacedShips: [{x: 4}, {x:3}, {x:3}, {x:3}]} } })
+	})
+	it('Moves the ship to the edge but no further', () => {
+		let state = newGame()
+		state = gameStep(state, PLAYER.HUMAN, INPUT.LEFT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.LEFT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.LEFT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.LEFT)
+		expect(state).toMatchObject({boards: {[PLAYER.HUMAN]: {unplacedShips: [{x: 1}, {x:3}, {x:3}, {x:3}]} } })
+	})
+	it('Rotates a ship', () => {
+		let state = newGame()
+		expect(state).toMatchObject({boards: {[PLAYER.HUMAN]: {unplacedShips: [{horizontal:false}, {}, {}, {}]} } })
+	})
+	it('moves the ship to initial position if right, down, left, up is the input', () => {
+		let state = newGame()
+		state = gameStep(state, PLAYER.HUMAN, INPUT.RIGHT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.DOWN)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.LEFT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.UP)
+		expect(state).toMatchObject({boards: {[PLAYER.HUMAN]: {unplacedShips: [{x: 3}, {x:3}, {x:3}, {x:3}]} } })
+	})
+	it('passes the turn when input is confirm and move is allowed', () => {
+		let state = newGame()
+		state = gameStep(state, PLAYER.HUMAN, INPUT.CONFIRM)
+		expect(state).toMatchObject({ turn : PLAYER.AI })
+	})
+	it('NOOPs when confirming on a disallowed placement', () => {
+		let state = newGame()
+		state = gameStep(state, PLAYER.HUMAN, INPUT.CONFIRM) //place
+		state = gameStep(state, PLAYER.AI, INPUT.CONFIRM) //place
+		state = gameStep(state, PLAYER.HUMAN, INPUT.CONFIRM) //place, will noop since there is already a ship here
+		expect(gameStep(state, PLAYER.HUMAN, INPUT.CONFIRM)).toMatchObject({ turn : PLAYER.HUMAN })
+	})
+	it('Allows placement of a bomb when there is no overlapping bomb', () => {
+		let state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			winner : null,
+			boards : {
+				[PLAYER.HUMAN] : {
+					ships: [
+						{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"},
+						{x: 1, y: 2, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"},
+						{x: 1, y: 3, size: 4, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship4"},
+						{x: 1, y: 4, size: 5, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship5"}
+					],
+					unplacedShips: [],
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: false}
+				},
+				[PLAYER.AI] : {
+					ships: [],
+					unplacedShips: [
+						{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"},
+						{x: 1, y: 2, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"},
+						{x: 1, y: 3, size: 4, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship4"},
+						{x: 1, y: 4, size: 5, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship5"}
+					],
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: false}
+				},
+			}
+		}
+
+		state = gameStep(state, PLAYER.HUMAN, INPUT.CONFIRM)
+		expect(state).toMatchObject({ turn : PLAYER.AI })
+	})
+	it('Disallows placement of a bomb when there is an overlapping bomb', () => {
+		let state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			winner : null,
+			boards : {
+				[PLAYER.HUMAN] : {
+					ships: [
+						{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"},
+						{x: 1, y: 2, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"},
+						{x: 1, y: 3, size: 4, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship4"},
+						{x: 1, y: 4, size: 5, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship5"}
+					],
+					unplacedShips: [],
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: true}
+				},
+				[PLAYER.AI] : {
+					ships: [],
+					unplacedShips: [
+						{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"},
+						{x: 1, y: 2, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"},
+						{x: 1, y: 3, size: 4, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship4"},
+						{x: 1, y: 4, size: 5, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship5"}
+					],
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: true}
+				},
+			}
+		}
+
+		state = gameStep(state, PLAYER.HUMAN, INPUT.CONFIRM)
+		expect(state).toMatchObject({ turn : PLAYER.HUMAN })
+	})
+	it('Can move a bomb in a cirlce', () => {
+		let state = {
+			gameState : GAMESTATE.PLACING_BOMBS,
+			turn : PLAYER.HUMAN,
+			winner : null,
+			boards : {
+				[PLAYER.HUMAN] : {
+					ships: [
+						{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"},
+						{x: 1, y: 2, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"},
+						{x: 1, y: 3, size: 4, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship4"},
+						{x: 1, y: 4, size: 5, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship5"}
+					],
+					unplacedShips: [],
+					bombs: [],
+					unplacedBomb: {x:2, y:2, hit: false, overlapping: true}
+				},
+				[PLAYER.AI] : {
+					ships: [],
+					unplacedShips: [
+						{x: 1, y: 1, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"},
+						{x: 1, y: 2, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"},
+						{x: 1, y: 3, size: 4, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship4"},
+						{x: 1, y: 4, size: 5, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship5"}
+					],
+					bombs: [],
+					unplacedBomb: {x:1, y:1, hit: false, overlapping: true}
+				},
+			}
+		}
+
+		state = gameStep(state, PLAYER.HUMAN, INPUT.LEFT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.DOWN)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.RIGHT)
+		state = gameStep(state, PLAYER.HUMAN, INPUT.UP)
+		expect(state).toMatchObject({ boards : { [PLAYER.HUMAN] : { unplacedBomb : {x: 2, y : 2} } } })
 	})
 })

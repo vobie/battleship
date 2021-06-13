@@ -25,8 +25,8 @@ INPUT.keyCodeMapping = {
 }
 
 export const PLAYER = {}
-PLAYER.HUMAN = Symbol('Player (Human)')
-PLAYER.AI = Symbol('Player (AI)')
+PLAYER.HUMAN = "PLAYER_HUMAN"//Symbol('Player (Human)')
+PLAYER.AI = "PLAYER_AI"//Symbol('Player (AI)')
 
 export const INITIAL_STATE = {
 	gameState : GAMESTATE.PLACING_SHIPS,
