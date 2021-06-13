@@ -1,5 +1,6 @@
 # Battleship.js
 Battleship game with a (bad) AI opponent
+
 ![image](https://user-images.githubusercontent.com/9901298/121822022-0625bb80-cc9d-11eb-86e1-d53a1bf255a6.png) 
 
 # How to run
