@@ -3,9 +3,16 @@ import {stateClone, min, max} from './util.js'
 import _ from './underscore.js'
 
 export default {}
+let logger = () => {}
+export function setLogListener(logger){
+
+}
 
 //do the initial hot item accounting
-export function newGame(){ return stateClone(INITIAL_STATE) }
+export function newGame(){ 
+	logger('New game')
+	return stateClone(INITIAL_STATE) 
+}
 export function opponentOf(player) { return player === PLAYER.HUMAN ? PLAYER.AI : PLAYER.HUMAN }
 export function gameStep(_state, player, action) {
 	let state = stateClone(_state)
@@ -153,8 +160,6 @@ function placeBomb(_state, player, _bomb) {
 	let state = stateClone(_state)
 	let bomb = stateClone(_bomb)
 	const ships = state.boards[opponentOf(player)].ships
-
-	console.log(`Placing bomb at ${bomb.x},${bomb.y}`)
 
 	//not the prettiest implementation with map and side effects but it's contained
 	//check for hits

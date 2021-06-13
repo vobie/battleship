@@ -324,6 +324,7 @@ describe('Input testing. Bombing and placing phases tested through gameStep', ()
 	})
 	it('Rotates a ship', () => {
 		let state = newGame()
+		state = gameStep(state, PLAYER.HUMAN, INPUT.ROTATE)
 		expect(state).toMatchObject({boards: {[PLAYER.HUMAN]: {unplacedShips: [{horizontal:false}, {}, {}, {}]} } })
 	})
 	it('moves the ship to initial position if right, down, left, up is the input', () => {

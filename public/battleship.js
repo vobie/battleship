@@ -4,10 +4,11 @@
 //TODO bug with unknown
 //TODO fix unknown action and ai
 //TODO BUG: initial check on bomb overlap not working
-import {newGame, gameStep, opponentOf} from './game-logic.js'
+import {setLogListener, newGame, gameStep, opponentOf} from './game-logic.js'
 import {GAMESTATE, INPUT, PLAYER, INITIAL_STATE} from './game-constants.js'
 import {stateClone} from './util.js'
  
+setLogListener((log) => console.log(log))
 
 /*
 	Drawing constants
