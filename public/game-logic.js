@@ -2,8 +2,9 @@ import {GAMESTATE, INPUT, PLAYER, INITIAL_STATE} from './game-constants.js'
 import {stateClone, min, max} from './util.js'
 
 export default {}
+
 //do the initial hot item accounting
-export function newGame(){ return INITIAL_STATE }
+export function newGame(){ return stateClone(INITIAL_STATE) }
 export function opponentOf(player) { return player === PLAYER.HUMAN ? PLAYER.AI : PLAYER.HUMAN }
 export function gameStep(_state, player, action) {
 	let state = stateClone(_state)
@@ -13,10 +14,10 @@ export function gameStep(_state, player, action) {
 
 	switch(state.gameState) {
 		case GAMESTATE.PLACING_SHIPS:
-			state = handleInputPlacingPhase(state, player, action)
+			state = handleInputPlacing(state, player, action)
 		break;
 		case GAMESTATE.PLACING_BOMBS:
-			state = handleInputBombPhase(state, player, action)
+			state = handleInputBombing(state, player, action)
 		break;
 		case GAMESTATE.IDLE:
 			throw new Error('Game is not active')
@@ -38,7 +39,7 @@ export function gameStep(_state, player, action) {
 		state.winner = PLAYER.HUMAN
 	return state
 }
-function handleInputPlacingPhase(_state, player, action) {
+function handleInputPlacing(_state, player, action) {
 	let state = stateClone(_state)
 	const playerState = state.boards[player]
 
@@ -81,7 +82,7 @@ function handleInputPlacingPhase(_state, player, action) {
 }
 
 
-function handleInputBombPhase(_state, player, action){
+function handleInputBombing(_state, player, action){
 	let state = stateClone(_state)
 	const playerState = state.boards[player]
 
@@ -117,7 +118,7 @@ function handleInputBombPhase(_state, player, action){
 			default:
 				throw new Error('Unknown action') //NOTE - Need to know to ignore the rotation action action
 		}
-		playerState.unplacedBomb = forceBombInsideBoard(hotBomb)
+		playerState.unplacedBomb = clampBombPosition(hotBomb)
 	}
 	state = hotItemAccounting(state, player)
 	return state
@@ -131,7 +132,7 @@ function hotItemAccounting(_state, player){
 
 		playerState.unplacedShips = playerState.unplacedShips.map(s => {
 			if(s.id === hotShip.id){
-				return markOverlappingShip(forceShipInsideBoard(hotShip), playerState.ships)
+				return markOverlappingShip(clampShipPosition(hotShip), playerState.ships)
 			}
 			return s
 		})
@@ -199,7 +200,7 @@ function passTurn(_state){
 /**
 *	Clamping function to ensure ships remain inside the bounds of the board
 */
-function forceShipInsideBoard(ship) {
+function clampShipPosition(ship) {
 	const dirtyShip = stateClone(ship)
 	if(ship.horizontal)
 		return _.assign(ship, { 
@@ -215,7 +216,7 @@ function forceShipInsideBoard(ship) {
 /**
 *	Clamping function to ensure bombs remain inside the bounds of the board
 */
-function forceBombInsideBoard(bomb) {
+function clampBombPosition(bomb) {
 	const dirtyBomb = stateClone(bomb)
 	dirtyBomb.x = max(min(dirtyBomb.x, 10), 1)
 	dirtyBomb.y = max(min(dirtyBomb.y, 10), 1)
@@ -237,4 +238,22 @@ function getShipBoundingBox(ship) {
 		y1: ship.y,
 		y2: ship.y + (ship.horizontal ? 0 : ship.size-1)
 	})
+}
+
+
+export const testables = {
+	newGame,
+	opponentOf,
+	gameStep,
+	handleInputPlacing,
+	handleInputBombing,
+	hotItemAccounting,
+	placeBomb,
+	hitAccounting,
+	passTurn,
+	clampShipPosition,
+	clampBombPosition,
+	markOverlappingShip,
+	isOverlapping,
+	getShipBoundingBox
 }
