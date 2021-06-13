@@ -1,5 +1,6 @@
 import {GAMESTATE, INPUT, PLAYER, INITIAL_STATE} from './game-constants.js'
 import {stateClone, min, max} from './util.js'
+import _ from './underscore.js'
 
 export default {}
 
