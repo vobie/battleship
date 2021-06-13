@@ -67,7 +67,6 @@ describe('Ship BBOX helper', () => {
 /*
 	State updating functions
 */
-//Clamping functions
 describe('Bomb clamping function', () => {
 	it('Moves a bomb at (-1,-1) to (1,1)', () => {
 		expect(clampBombPosition({ x:-1, y:-1 })).toEqual({ x:1, y:1 })
@@ -130,5 +129,24 @@ describe('Turn passing state update', () => {
 		const state = newGame()
 		state.turn = PLAYER.AI
 		expect(passTurn(state)).toMatchObject({ turn: PLAYER.HUMAN })
+	})
+})
+
+describe('Hot item (ship or bomb to be placed) state updates - overlaps', ()=> {
+	it('Marks overlap when two ships at 1,1', () => {
+		const state = {
+			gameState : GAMESTATE.PLACING_SHIPS,
+			turn : PLAYER.HUMAN,
+			winner : null,
+			boards : {
+				[PLAYER.HUMAN] : {
+					ships: [{x: 3, y: 3, size: 2, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship2"}],
+					unplacedShips: [
+						{x: 3, y: 3, size: 3, horizontal: true, overlapping:false, hits: 0, sunken: false, id: "Ship3"}
+					]
+				},
+			}
+		}
+		expect(hotItemAccounting(state)).toMatchObject({ boards: { unplacedShips: [{ overlapping: true }] } })
 	})
 })
