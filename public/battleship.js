@@ -113,7 +113,7 @@ function drawBoard(svg, player, _state, debug) {
 		
 }
 
-const DEBUG = true
+const DEBUG = false
 let stateInstance = newGame()
 
 let onInput = restart
