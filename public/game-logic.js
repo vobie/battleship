@@ -2,7 +2,7 @@ import {GAMESTATE, INPUT, PLAYER, INITIAL_STATE} from './game-constants.js'
 import {stateClone, min, max} from './util.js'
 import _ from './underscore.js'
 
-export default {}
+
 let logger = () => {}
 export function setLogListener(l){
 	logger = l
@@ -14,6 +14,10 @@ export function newGame(){
 	return stateClone(INITIAL_STATE) 
 }
 export function opponentOf(player) { return player === PLAYER.HUMAN ? PLAYER.AI : PLAYER.HUMAN }
+
+/*
+	The main state update function that is accessible from outside this scope. 
+*/
 export function gameStep(_state, player, action) {
 	let state = stateClone(_state)
 
@@ -49,6 +53,10 @@ export function gameStep(_state, player, action) {
 	}
 	return state
 }
+
+/*
+	Input handling related to placing ships
+*/
 function handleInputPlacing(_state, player, action) {
 	let state = stateClone(_state)
 	const playerState = state.boards[player]
@@ -89,7 +97,9 @@ function handleInputPlacing(_state, player, action) {
 	return state
 }
 
-
+/*
+	Input handling related to placing bombs
+*/
 function handleInputBombing(_state, player, action){
 	let state = stateClone(_state)
 	const playerState = state.boards[player]
@@ -132,6 +142,9 @@ function handleInputBombing(_state, player, action){
 	return state
 }
 
+/*
+	Updates state related to if it's possible to place (bomb/ship) in the current position or if it overlaps with something already placed.
+*/
 function hotItemAccounting(_state, player){
 	const state = stateClone(_state)
 	const playerState = state.boards[player]
@@ -156,6 +169,9 @@ function hotItemAccounting(_state, player){
 	return state
 }
 
+/*
+	When placing a bomb, check if it's a hit. If so, set the bomb as a hit and do the calculations related to the ship it hits
+*/
 function placeBomb(_state, player, _bomb) {
 	let state = stateClone(_state)
 	let bomb = stateClone(_bomb)
@@ -185,6 +201,9 @@ function placeBomb(_state, player, _bomb) {
 	return state
 }
 
+/*
+	Accounts for hits on ships and updates their sunken state
+*/
 function hitAccounting(bomb, _ship){
 	const ship = stateClone(_ship)
 	const bbox = getShipBoundingBox(ship)
@@ -199,6 +218,9 @@ function hitAccounting(bomb, _ship){
 
 	return ship
 }
+/*
+	Helper to toggle whose turn it is
+*/
 function passTurn(_state){
 	const state = stateClone(_state)
 	if(state.turn === PLAYER.HUMAN)
@@ -236,11 +258,14 @@ function markOverlappingShip(_ship, placedShips) {
 	const ship = stateClone(_ship)
 	return _.assign(ship, { overlapping: placedShips.reduce( (acc, s) => acc || isOverlapping(s, ship), false) })
 }
+
+//Checks if two bounding boxes intersect
 function isOverlapping(ship1, ship2) {
 	//https://stackoverflow.com/questions/20925818/algorithm-to-check-if-two-boxes-overlap
 	const [ship1BBox, ship2BBox] = [getShipBoundingBox(ship1), getShipBoundingBox(ship2)]
 	return (ship1BBox.x2 >= ship2BBox.x1 && ship2BBox.x2 >= ship1BBox.x1) && (ship1BBox.y2 >= ship2BBox.y1 && ship2BBox.y2 >= ship1BBox.y1)
 }
+//Calculates bounding box
 function getShipBoundingBox(ship) {
 	return ({
 		x1: ship.x,
@@ -250,7 +275,7 @@ function getShipBoundingBox(ship) {
 	})
 }
 
-
+export default {}
 export const testables = {
 	newGame,
 	opponentOf,

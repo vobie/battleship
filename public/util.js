@@ -1,6 +1,9 @@
 import _ from './underscore.js'
 import {PLAYER} from './game-constants.js'
 
+/*
+    Function to clone the state. This is to avoid unintentional side effects propagation which could result in side effects.
+*/
 export function stateClone (item) {
   if (_.isArray(item)){
     return _.map(item, o => stateClone(o))

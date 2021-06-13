@@ -115,17 +115,21 @@ function drawBoard(svg, player, _state, debug) {
 
 const DEBUG = true
 let stateInstance = newGame()
+
 let onInput = restart
 let gameScore = {
 	[PLAYER.HUMAN]: 0,
 	[PLAYER.AI]: 0
 }
-function log(msg) {
-	d3.select('#game-log').text(msg)
-}
+
+//Set up the in-dom log
+function log(msg) { d3.select('#game-log').text(msg) }
 setLogListener(log)
 
+//Simple game tracking functions. Almost all logic is contained within the game-logic file
 function restart() {
+	wipeBoard(boardPlayer)
+	wipeBoard(boardAI)
 	stateInstance = newGame()
 	onInput = (action) => advanceGame(action)
 	draw(stateInstance)
@@ -134,20 +138,23 @@ function draw(state){
 	drawBoard(boardPlayer, PLAYER.HUMAN, stateInstance, DEBUG)
 	drawBoard(boardAI, PLAYER.AI, stateInstance, DEBUG)
 }
+/*
+	Call the state update function and draw the results
+*/
 function advanceGame(action){
 	stateInstance = gameStep(stateInstance, stateInstance.turn, action)
 	draw(stateInstance)
 	if(stateInstance.winner){
 		gameScore[stateInstance.winner]++
 		log(`Game ended. Score is ${gameScore[PLAYER.HUMAN]}-${gameScore[PLAYER.AI]}`)
-		wipeBoard(boardPlayer)
-		wipeBoard(boardAI)
+
 		onInput = restart
 	}else if(stateInstance.turn === PLAYER.AI) {
 		doAIrandomAction()
 	}
 }
 
+//Possibly the worst AI ever. It tried actions until something sticks. Not really a problem due to the small board and limited range of actions.
 const aiRandomActions = [INPUT.LEFT, INPUT.RIGHT, INPUT.DOWN, INPUT.UP, INPUT.ROTATE, INPUT.CONFIRM]
 let aiInterval
 function doAIrandomAction(){
