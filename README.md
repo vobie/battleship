@@ -13,3 +13,5 @@ The project uses jest.
 ```
 npm test
 ```
+# Debug
+The file `battleship.js` has a `DEBUG` flag that can be toggled. This will lift the fog of war on the AI player's board.
