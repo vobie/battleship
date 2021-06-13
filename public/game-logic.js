@@ -35,7 +35,6 @@ export function gameStep(_state, player, action) {
 			return state
 	}
 	
-	//Done placing ships, update the state to indicate we are now in the bombing phase
 	if(state.boards[PLAYER.HUMAN].ships.length === 4 && state.boards[PLAYER.AI].ships.length === 4){
 		state.gameState = GAMESTATE.PLACING_BOMBS
 	}
@@ -93,6 +92,8 @@ function handleInputPlacing(_state, player, action) {
 			break;
 		}
 	}
+
+	//update the state of the hot ship, it may be that it is now in a position where it's overlapping with another
 	state = hotItemAccounting(state, player)
 	return state
 }
@@ -134,16 +135,18 @@ function handleInputBombing(_state, player, action){
 			case INPUT.ROTATE:
 			break;
 			default:
-				throw new Error('Unknown action') //NOTE - Need to know to ignore the rotation action action
+				throw new Error('Unknown action')
 		}
 		playerState.unplacedBomb = clampBombPosition(hotBomb)
 	}
+
+	//Finish up by updating the derived state (does the, possibly new, hot item overlap?)
 	state = hotItemAccounting(state, player)
 	return state
 }
 
 /*
-	Updates state related to if it's possible to place (bomb/ship) in the current position or if it overlaps with something already placed.
+	Updates state related to if it's possible to place the hot item in the current position or if it overlaps with something already placed.
 */
 function hotItemAccounting(_state, player){
 	const state = stateClone(_state)
@@ -230,7 +233,7 @@ function passTurn(_state){
 	return state
 }
 /**
-*	Clamping function to ensure ships remain inside the bounds of the board
+*	Clamping function for ships
 */
 function clampShipPosition(ship) {
 	const dirtyShip = stateClone(ship)
@@ -246,7 +249,7 @@ function clampShipPosition(ship) {
 		})
 }
 /**
-*	Clamping function to ensure bombs remain inside the bounds of the board
+*	Clamping function for bombs
 */
 function clampBombPosition(bomb) {
 	const dirtyBomb = stateClone(bomb)

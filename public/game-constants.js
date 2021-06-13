@@ -25,7 +25,7 @@ INPUT.keyCodeMapping = {
 }
 
 export const PLAYER = {}
-PLAYER.HUMAN = "PLAYER_HUMAN"//Symbol('Player (Human)')
+PLAYER.HUMAN = "PLAYER_HUMAN"//Symbol('Player (Human)') - Apparently symbols are not ENUM like things in javascript and using them as keys caused issues with tests
 PLAYER.AI = "PLAYER_AI"//Symbol('Player (AI)')
 
 export const INITIAL_STATE = {
