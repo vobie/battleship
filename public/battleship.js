@@ -146,7 +146,7 @@ function advanceGame(action){
 	draw(stateInstance)
 	if(stateInstance.winner){
 		gameScore[stateInstance.winner]++
-		log(`Game ended. Score is ${gameScore[PLAYER.HUMAN]}-${gameScore[PLAYER.AI]}`)
+		log(`Game ended. Score is ${gameScore[PLAYER.HUMAN]}-${gameScore[PLAYER.AI]}. Press any key`)
 
 		onInput = restart
 	}else if(stateInstance.turn === PLAYER.AI) {

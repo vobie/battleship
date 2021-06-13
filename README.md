@@ -1,7 +1,7 @@
-# battleship
+# Battleship.js
 Battleship game with a (bad) AI opponent
 
-![image](https://user-images.githubusercontent.com/9901298/121708267-b0ec7d00-cad7-11eb-9587-ab34f2e6d8af.png)
+![image](https://user-images.githubusercontent.com/9901298/121822022-0625bb80-cc9d-11eb-86e1-d53a1bf255a6.png) 
 
 # How to run
 ```
